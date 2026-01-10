@@ -1,0 +1,23 @@
+<idea-plugin>
+    <id>com.chalk.plugin</id>
+    <name>Chalk</name>
+    <vendor email="support@chalk.ai" url="https://chalk.ai">Chalk</vendor>
+
+    <description><![CDATA[
+    Provides go-to-definition support for Chalk SQL resolvers.
+    <br/>
+    Click on class names in <code>-- resolves: ClassName</code> comments
+    to navigate to the Python feature class definition.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Register for any language since .chalk.sql might be plain text or SQL -->
+        <psi.referenceContributor
+            implementation="com.chalk.intellij.ChalkReferenceContributor"/>
+        <annotator
+            language=""
+            implementationClass="com.chalk.intellij.ChalkSqlAnnotator"/>
+    </extensions>
+</idea-plugin>
