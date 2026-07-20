@@ -1,23 +1,59 @@
-<idea-plugin>
+<idea-plugin url="https://github.com/chalk-ai/chalk-intellij">
     <id>com.chalk.plugin</id>
     <name>Chalk</name>
     <vendor email="support@chalk.ai" url="https://chalk.ai">Chalk</vendor>
-
     <description><![CDATA[
-    Provides go-to-definition support for Chalk SQL resolvers.
-    <br/>
-    Click on class names in <code>-- resolves: ClassName</code> comments
-    to navigate to the Python feature class definition.
+    <p>Chalk provides language intelligence and typechecking for Chalk projects.</p>
+    <ul>
+      <li>Python semantic analysis and diagnostics</li>
+      <li>Navigation for Chalk SQL resolvers</li>
+      <li>Validation for <code>chalk.yml</code> and <code>chalk.yaml</code></li>
+      <li>Managed, checksum-verified installation of <code>chalk-lsp</code></li>
+      <li>Project-root isolation and suppression of competing built-in Python type inspections</li>
+    </ul>
+    <p>The language server starts only for files beneath a Chalk project root. Server updates are explicit and independent of plugin releases.</p>
+    <p><a href="https://docs.chalk.ai">Documentation</a> · <a href="https://github.com/chalk-ai/chalk-intellij">Source code</a> · <a href="https://github.com/chalk-ai/chalk-intellij/issues">Issue tracker</a></p>
     ]]></description>
+    <change-notes><![CDATA[
+    <h3>1.1.0</h3>
+    <ul>
+      <li>Run the native <code>chalk-lsp</code> through JetBrains' LSP API.</li>
+      <li>Install and update the server with checksum verification and safe replacement.</li>
+      <li>Add Chalk settings, status, restart, update, and log actions.</li>
+      <li>Scope server activation and Python inspection suppression to Chalk roots.</li>
+    </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.ultimate</depends>
+    <depends>com.intellij.modules.lsp</depends>
+    <depends>com.intellij.modules.python</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- Register for any language since .chalk.sql might be plain text or SQL -->
-        <psi.referenceContributor
-            implementation="com.chalk.intellij.ChalkReferenceContributor"/>
-        <annotator
-            language=""
-            implementationClass="com.chalk.intellij.ChalkSqlAnnotator"/>
+        <platform.lsp.serverSupportProvider implementation="com.chalk.intellij.ChalkLspServerSupportProvider"/>
+        <applicationService serviceImplementation="com.chalk.intellij.ChalkLspInstaller"/>
+        <notificationGroup id="Chalk Language Server" displayType="BALLOON"/>
+        <projectConfigurable id="com.chalk.intellij.settings"
+                             displayName="Chalk"
+                             groupId="language"
+                             nonDefaultProject="true"
+                             instance="com.chalk.intellij.ChalkSettingsConfigurable"/>
+        <lang.inspectionSuppressor language="Python"
+                                   implementationClass="com.chalk.intellij.ChalkTypeInspectionSuppressor"/>
     </extensions>
+
+    <actions>
+        <action id="com.chalk.intellij.UpdateServer"
+                class="com.chalk.intellij.ChalkUpdateServerAction"
+                text="Update Chalk Language Server"
+                description="Download the latest Chalk language server and restart it">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+        <action id="com.chalk.intellij.RestartServer"
+                class="com.chalk.intellij.ChalkRestartServerAction"
+                text="Restart Chalk Language Server"
+                description="Restart Chalk without checking for updates">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>

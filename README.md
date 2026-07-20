@@ -1,62 +1,42 @@
-# Chalk IntelliJ Plugin
+# Chalk for JetBrains IDEs
 
-IntelliJ plugin for [Chalk](https://chalk.ai) development.
+Chalk language support for IntelliJ IDEA, PyCharm, DataSpell, and other commercial IntelliJ-based IDEs using JetBrains' native Language Server Protocol API.
+
+## Compatibility
+
+The plugin requires a 2025.3 or newer IDE with `com.intellij.modules.lsp`. Unified PyCharm is supported. Android Studio and open-source IntelliJ Platform builds do not expose JetBrains' LSP API.
 
 ## Features
 
-### SQL Resolver Navigation
-- **Go-to-definition**: Cmd/Ctrl+Click on class names in `-- resolves: ClassName` comments to jump to the Python feature class definition
-- **Syntax highlighting**: Class names in resolves comments are highlighted as clickable references
-- **Validation**: Shows errors for `.chalk.sql` files missing required `-- source:` or `-- resolves:` comments
-- **Quick fixes**: Automatically add missing comments with Alt+Enter
+- Python, `.chalk.sql`, and Chalk configuration language intelligence through the downloaded `chalk-lsp` server
+- One server per root containing `chalk.yml` or `chalk.yaml`
+- Managed, checksum-verified language-server installation
+- Root-scoped suppression of JetBrains Python type inspections
 
-## Building
+`chalk-lsp` performs Chalk's semantic analysis and typechecking, SQL resolver support, and configuration diagnostics. Those features and their fixes ship independently of plugin releases, so keeping the server current matters. The latest server installs on the first Chalk file open. After that, the plugin does not look up releases, update automatically, or prompt you; the plugin and server have independent versions.
 
-```bash
-./gradlew buildPlugin
-```
+The installed `chalk-lsp` version is always shown under **Settings → Languages & Frameworks → Chalk**. To update manually, choose **Tools → Update Chalk Language Server**, or open that settings page and click **Update language server**. The update downloads and verifies the latest release, replaces the server, and restarts it. A failed lookup, download, checksum, extraction, metadata write, or replacement preserves the existing server and its installed-version metadata.
 
-The plugin zip will be at `build/distributions/chalk-intellij-1.0.0.zip`
-
-## Installation
-
-### From JetBrains Marketplace
-
-Search for "Chalk" in Settings → Plugins → Marketplace
-
-### From Disk
-
-1. Build: `./gradlew buildPlugin`
-2. Settings → Plugins → ⚙️ → "Install Plugin from Disk..."
-3. Select the zip from `build/distributions/`
+`chalk-lsp` replaces other Python semantic/typechecking servers in Chalk projects. New Chalk projects include `pyproject.toml` rules for Pyright, basedpyright, mypy, and ty. Third-party plugins that expose no per-root disable API must be disabled using that plugin's project settings.
 
 ## Development
 
+The build requires JDK 21 and Gradle 8.14.5:
+
 ```bash
-./gradlew runIde
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
+gradle wrapper --gradle-version 8.14.5
+./gradlew buildPlugin
 ```
 
-This launches a sandboxed IntelliJ instance with the plugin loaded.
+The project intentionally uses IntelliJ Platform Gradle Plugin 2.11.0, which supports IntelliJ 2025.3 without the Gradle 9 minimum introduced in plugin 2.12. The first command regenerates the checked-in wrapper before the plugin build.
+The build resolves the latest `PythonCore` plugin compatible with the target IDE from JetBrains Marketplace because Python support is no longer bundled with IntelliJ IDEA.
 
-## Usage
+The package is written to `build/distributions/`. Publishing remains an explicit `./gradlew publishPlugin` operation.
 
-In any `.chalk.sql` file:
+## Marketplace publication
 
-```sql
--- source: my_snowflake_source
--- resolves: UserRetailerAffinityScore
-SELECT * FROM some_table
-```
+The distribution embeds the Chalk plugin logo, homepage, vendor contact, description, and release notes required for its IDE and Marketplace listing. For the first JetBrains Marketplace upload, select Chalk's vendor profile and provide the Marketplace-only fields: the MIT license, the required developer EULA, and the public source URL `https://github.com/chalk-ai/chalk-intellij`. Automated publication uses `PUBLISH_TOKEN`; signing additionally requires `CERTIFICATE_CHAIN`, `PRIVATE_KEY`, and `PRIVATE_KEY_PASSWORD`.
 
-- Cmd/Ctrl+Click on `UserRetailerAffinityScore` to navigate to the Python class
-- Missing comments show as errors with quick-fix support
-- Only searches within Chalk project root (defined by `chalk.yaml`/`chalk.yml`)
-
-## Requirements
-
-- IntelliJ IDEA 2023.3+ (Community or Ultimate)
-- JDK 17+ (for building)
-
-## License
-
-Apache 2.0 - see [LICENSE](LICENSE)
+For protocol logs, enable `#com.intellij.platform.lsp` under **Help → Diagnostic Tools → Debug Log Settings** or use the Chalk settings page to open `idea.log`.

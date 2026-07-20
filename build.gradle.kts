@@ -1,43 +1,38 @@
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.9.21"
-    id("org.jetbrains.intellij") version "1.16.1"
+    id("org.jetbrains.kotlin.jvm") version "2.2.20"
+    id("org.jetbrains.intellij.platform") version "2.11.0"
 }
 
 group = "com.chalk"
-version = "1.0.0"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
+    intellijPlatform { defaultRepositories() }
 }
 
-intellij {
-    version.set("2023.3")
-    type.set("IC") // IntelliJ IDEA Community Edition
-    // No additional plugins required - we use text-based search for Python classes
+dependencies {
+    intellijPlatform {
+        intellijIdeaUltimate("2025.3.3")
+        compatiblePlugin("PythonCore")
+    }
+    implementation("org.apache.commons:commons-compress:1.28.0")
 }
 
-tasks {
-    withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-    }
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
-    }
+kotlin { jvmToolchain(21) }
 
-    patchPluginXml {
-        sinceBuild.set("233")
-        untilBuild.set("243.*")
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "253"
+            untilBuild = provider { null }
+        }
     }
-
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
-
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
-    }
+    publishing { token = providers.environmentVariable("PUBLISH_TOKEN") }
 }
