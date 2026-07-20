@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.chalk"
-version = "1.1.0"
+version = providers.gradleProperty("pluginVersion").getOrElse("0.0.0")
 
 repositories {
     mavenCentral()
