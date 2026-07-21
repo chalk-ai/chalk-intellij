@@ -28,6 +28,18 @@ jobs:
       - name: Verify Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
+      - name: Require Marketplace credentials
+        run: |
+          test -n "$PUBLISH_TOKEN" || { echo "::error::Missing PUBLISH_TOKEN repository secret"; exit 1; }
+          test -n "$CERTIFICATE_CHAIN" || { echo "::error::Missing CERTIFICATE_CHAIN repository secret"; exit 1; }
+          test -n "$PRIVATE_KEY" || { echo "::error::Missing PRIVATE_KEY repository secret"; exit 1; }
+          test -n "$PRIVATE_KEY_PASSWORD" || { echo "::error::Missing PRIVATE_KEY_PASSWORD repository secret"; exit 1; }
+        env:
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
+          CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+
       - name: Read plugin version from release tag
         id: version
         run: |
