@@ -1,7 +1,7 @@
 package com.chalk.intellij
 
 import com.intellij.ide.actions.RevealFileAction
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspServerSupportProvider
 import java.io.File
 
 object ChalkServerActions {
@@ -56,13 +57,19 @@ object ChalkServerActions {
     }
 
     fun conflictingLanguageServerPlugins(): List<String> {
-        val competingName = Regex("(?i)(pylance|basedpyright|pyright|python[ -]?lsp|jedi|ruff|\\bty\\b)")
-        return PluginManagerCore.loadedPlugins
-            .filter { plugin ->
-                plugin.pluginId.idString != "com.chalk.plugin" &&
-                    competingName.containsMatchIn("${plugin.name} ${plugin.pluginId.idString}")
+        val competingName = Regex("(?i)(pylance|basedpyright|pyright|pyrefly|\\bpyre\\b|mypy|python[ ._-]?lsp|jedi|ruff|\\bty\\b)")
+        return LspServerSupportProvider.EP_NAME.extensionList
+            .mapNotNull { provider ->
+                val plugin = (provider.javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor
+                    ?: return@mapNotNull null
+                if (
+                    plugin.pluginId.idString == "com.chalk.plugin" ||
+                    !competingName.containsMatchIn("${plugin.name} ${plugin.pluginId.idString} ${provider.javaClass.name}")
+                ) {
+                    return@mapNotNull null
+                }
+                plugin.name
             }
-            .map { it.name }
             .distinct()
             .sorted()
     }
